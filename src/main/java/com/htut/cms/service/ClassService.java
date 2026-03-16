@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +54,13 @@ public class ClassService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ClassResponse getPublicClassDetail(UUID classId) {
+        CourseClass courseClass = classRepository.findByIdAndStatusNot(classId, ClassStatus.DRAFT)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found."));
+        return toResponse(courseClass);
     }
 
     private void validateCreateClassRequest(CreateClassRequest request) {

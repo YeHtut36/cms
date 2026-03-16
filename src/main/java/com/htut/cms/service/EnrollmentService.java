@@ -1,5 +1,6 @@
 package com.htut.cms.service;
 
+import com.htut.cms.dto.response.EnrollmentResponse;
 import com.htut.cms.model.ClassStatus;
 import com.htut.cms.model.CourseClass;
 import com.htut.cms.model.Enrollment;
@@ -46,6 +47,7 @@ public class EnrollmentService {
 
         if (courseClass.getCurrentEnrollment() >= courseClass.getMaxCapacity()) {
             courseClass.setStatus(ClassStatus.FULL);
+            classRepository.save(courseClass);
             throw new IllegalArgumentException("Class is full.");
         }
 
@@ -57,21 +59,24 @@ public class EnrollmentService {
 
         Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
 
-        courseClass.setCurrentEnrollment(courseClass.getCurrentEnrollment() + 1);
-        if (courseClass.getCurrentEnrollment() >= courseClass.getMaxCapacity()) {
-            courseClass.setStatus(ClassStatus.FULL);
-        }
-        classRepository.save(courseClass);
-
         return savedEnrollment.getId();
     }
 
     @Transactional(readOnly = true)
-    public List<Enrollment> getStudentEnrollments(String studentEmail) {
+    public List<EnrollmentResponse> getStudentEnrollments(String studentEmail) {
         User student = userRepository.findByEmailIgnoreCase(studentEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found."));
 
-        return enrollmentRepository.findAllByUser_IdOrderByEnrolledAtDesc(student.getId());
+        return enrollmentRepository.findAllByUser_IdOrderByEnrolledAtDesc(student.getId())
+                .stream()
+                .map(enrollment -> new EnrollmentResponse(
+                        enrollment.getId(),
+                        enrollment.getCourseClass().getId(),
+                        enrollment.getCourseClass().getTitle(),
+                        enrollment.getStatus(),
+                        enrollment.getEnrolledAt()
+                ))
+                .toList();
     }
 }
 
