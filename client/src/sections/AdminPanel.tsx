@@ -8,7 +8,9 @@ import { getPendingStudents } from '../services/userService'
 import type { ClassStatus, UserProfile } from '../types/models'
 import { formatDate } from '../utils/format'
 
-export function AdminPanel({ token }: { token: string }) {
+type AdminPanelMode = 'all' | 'classes' | 'broadcast' | 'students'
+
+export function AdminPanel({ token, mode = 'all' }: { token: string; mode?: AdminPanelMode }) {
   const [title, setTitle] = useState<string>('')
   const [message, setMessage] = useState<string>('')
   const [sendInfo, setSendInfo] = useState<string>('')
@@ -30,11 +32,19 @@ export function AdminPanel({ token }: { token: string }) {
     status: 'UPCOMING' as ClassStatus,
     thumbnailUrl: '',
     kbzQrImageUrl: '',
+    kbzPayPhone: '',
   })
 
+  const showClasses = mode === 'all' || mode === 'classes'
+  const showBroadcast = mode === 'all' || mode === 'broadcast'
+  const showStudents = mode === 'all' || mode === 'students'
+
   useEffect(() => {
+    if (!showStudents) {
+      return
+    }
     getPendingStudents(token).then(setPendingStudents).catch(() => undefined)
-  }, [token])
+  }, [token, showStudents])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -57,11 +67,14 @@ export function AdminPanel({ token }: { token: string }) {
     setClassInfo('')
     setClassError('')
 
+    const paymentDetails = classForm.kbzPayPhone ? `KBZ Pay Phone: ${classForm.kbzPayPhone}` : ''
+    const combinedDescription = [classForm.description, paymentDetails].filter(Boolean).join('\n\n') || null
+
     try {
       await createClass(
         {
           title: classForm.title,
-          description: classForm.description || null,
+          description: combinedDescription,
           category: classForm.category || null,
           thumbnailUrl: classForm.thumbnailUrl || null,
           priceMmk: Number(classForm.priceMmk),
@@ -90,6 +103,7 @@ export function AdminPanel({ token }: { token: string }) {
         status: 'UPCOMING',
         thumbnailUrl: '',
         kbzQrImageUrl: '',
+        kbzPayPhone: '',
       })
     } catch (err) {
       setClassError((err as Error).message)
@@ -98,166 +112,190 @@ export function AdminPanel({ token }: { token: string }) {
     }
   }
 
+  const gridClass = showClasses && showBroadcast ? 'grid gap-4 xl:grid-cols-2' : 'grid gap-4'
+
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
-      <Card>
-        <form className="grid gap-3" onSubmit={submitClass}>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Create Class</h3>
-            <p className="text-sm text-slate-500">Publish new classes with pricing, schedule, and payment QR setup.</p>
-          </div>
+    <div className="space-y-4">
+      <div className={gridClass}>
+        {showClasses && (
+          <Card>
+            <form className="grid gap-3" onSubmit={submitClass}>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Create Class</h3>
+                <p className="text-sm text-slate-500">Publish new classes with pricing, schedule, and payment QR setup.</p>
+              </div>
 
-          <InputField label="Title" value={classForm.title} onChange={(v) => setClassForm((p) => ({ ...p, title: v }))} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <InputField
-              label="Category"
-              value={classForm.category}
-              onChange={(v) => setClassForm((p) => ({ ...p, category: v }))}
-              required={false}
-            />
-            <InputField
-              label="Instructor"
-              value={classForm.instructorName}
-              onChange={(v) => setClassForm((p) => ({ ...p, instructorName: v }))}
-              required={false}
-            />
-            <InputField
-              label="Price (MMK)"
-              type="number"
-              value={classForm.priceMmk}
-              onChange={(v) => setClassForm((p) => ({ ...p, priceMmk: v }))}
-            />
-            <InputField
-              label="Max Capacity"
-              type="number"
-              value={classForm.maxCapacity}
-              onChange={(v) => setClassForm((p) => ({ ...p, maxCapacity: v }))}
-            />
-            <InputField
-              label="Duration Weeks"
-              type="number"
-              required={false}
-              value={classForm.durationWeeks}
-              onChange={(v) => setClassForm((p) => ({ ...p, durationWeeks: v }))}
-            />
-            <label className="grid gap-1.5 text-sm text-slate-700">
-              <span className="font-medium">Status</span>
-              <select
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                value={classForm.status}
-                onChange={(event) => setClassForm((p) => ({ ...p, status: event.target.value as ClassStatus }))}
+              <InputField label="Title" value={classForm.title} onChange={(v) => setClassForm((p) => ({ ...p, title: v }))} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <InputField
+                  label="Category"
+                  value={classForm.category}
+                  onChange={(v) => setClassForm((p) => ({ ...p, category: v }))}
+                  required={false}
+                />
+                <InputField
+                  label="Instructor"
+                  value={classForm.instructorName}
+                  onChange={(v) => setClassForm((p) => ({ ...p, instructorName: v }))}
+                  required={false}
+                />
+                <InputField
+                  label="Price (MMK)"
+                  type="number"
+                  value={classForm.priceMmk}
+                  onChange={(v) => setClassForm((p) => ({ ...p, priceMmk: v }))}
+                />
+                <InputField
+                  label="Max Capacity"
+                  type="number"
+                  value={classForm.maxCapacity}
+                  onChange={(v) => setClassForm((p) => ({ ...p, maxCapacity: v }))}
+                />
+                <InputField
+                  label="Duration Weeks"
+                  type="number"
+                  required={false}
+                  value={classForm.durationWeeks}
+                  onChange={(v) => setClassForm((p) => ({ ...p, durationWeeks: v }))}
+                />
+                <label className="grid gap-1.5 text-sm text-slate-700">
+                  <span className="font-medium">Status</span>
+                  <select
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                    value={classForm.status}
+                    onChange={(event) => setClassForm((p) => ({ ...p, status: event.target.value as ClassStatus }))}
+                  >
+                    <option value="DRAFT">DRAFT</option>
+                    <option value="UPCOMING">UPCOMING</option>
+                    <option value="ONGOING">ONGOING</option>
+                  </select>
+                </label>
+                <InputField
+                  label="Start Date"
+                  type="datetime-local"
+                  value={classForm.startDate}
+                  onChange={(v) => setClassForm((p) => ({ ...p, startDate: v }))}
+                />
+                <InputField
+                  label="End Date"
+                  type="datetime-local"
+                  required={false}
+                  value={classForm.endDate}
+                  onChange={(v) => setClassForm((p) => ({ ...p, endDate: v }))}
+                />
+              </div>
+
+              <label className="grid gap-1.5 text-sm text-slate-700">
+                <span className="font-medium">Description</span>
+                <textarea
+                  className="min-h-24 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  value={classForm.description}
+                  onChange={(event) => setClassForm((p) => ({ ...p, description: event.target.value }))}
+                />
+              </label>
+
+              <div className="space-y-1.5 text-sm text-slate-700">
+                <InputField
+                  label="Thumbnail URL"
+                  required={false}
+                  value={classForm.thumbnailUrl}
+                  placeholder="Public image link for class card (optional)"
+                  onChange={(v) => setClassForm((p) => ({ ...p, thumbnailUrl: v }))}
+                />
+                <p className="text-xs text-slate-500">Use a hosted image link (e.g., S3/Cloudinary/public URL) for the class cover.</p>
+              </div>
+
+              <div className="space-y-2 text-sm text-slate-700">
+                <InputField
+                  label="KBZ QR Image URL"
+                  required={false}
+                  value={classForm.kbzQrImageUrl}
+                  placeholder="Paste hosted KBZ QR image URL"
+                  onChange={(v) => setClassForm((p) => ({ ...p, kbzQrImageUrl: v }))}
+                />
+                <InputField
+                  label="KBZ Pay Phone"
+                  required={false}
+                  value={classForm.kbzPayPhone}
+                  placeholder="09-xxxxxxxxx"
+                  onChange={(v) => setClassForm((p) => ({ ...p, kbzPayPhone: v }))}
+                />
+                <p className="text-xs text-slate-500">Upload the QR to a public host and paste the link; phone number will be appended to the class description for students.</p>
+              </div>
+
+              <button
+                className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 disabled:opacity-60"
+                type="submit"
+                disabled={creatingClass}
               >
-                <option value="DRAFT">DRAFT</option>
-                <option value="UPCOMING">UPCOMING</option>
-                <option value="ONGOING">ONGOING</option>
-              </select>
-            </label>
-            <InputField
-              label="Start Date"
-              type="datetime-local"
-              value={classForm.startDate}
-              onChange={(v) => setClassForm((p) => ({ ...p, startDate: v }))}
-            />
-            <InputField
-              label="End Date"
-              type="datetime-local"
-              required={false}
-              value={classForm.endDate}
-              onChange={(v) => setClassForm((p) => ({ ...p, endDate: v }))}
-            />
-          </div>
+                {creatingClass ? 'Creating...' : 'Create Class'}
+              </button>
 
-          <label className="grid gap-1.5 text-sm text-slate-700">
-            <span className="font-medium">Description</span>
-            <textarea
-              className="min-h-24 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-              value={classForm.description}
-              onChange={(event) => setClassForm((p) => ({ ...p, description: event.target.value }))}
-            />
-          </label>
+              {classInfo && <p className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700">{classInfo}</p>}
+              {classError && <p className="rounded-lg bg-rose-50 p-2 text-sm text-rose-700">{classError}</p>}
+            </form>
+          </Card>
+        )}
 
-          <InputField
-            label="Thumbnail URL"
-            required={false}
-            value={classForm.thumbnailUrl}
-            onChange={(v) => setClassForm((p) => ({ ...p, thumbnailUrl: v }))}
-          />
-          <InputField
-            label="KBZ QR Image URL"
-            required={false}
-            value={classForm.kbzQrImageUrl}
-            onChange={(v) => setClassForm((p) => ({ ...p, kbzQrImageUrl: v }))}
-          />
+        {showBroadcast && (
+          <Card>
+            <form id="broadcast" className="grid gap-3" onSubmit={submit}>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Admin Broadcast</h3>
+                <p className="text-sm text-slate-500">Send a real-time announcement to active students.</p>
+              </div>
 
-          <button
-            className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 disabled:opacity-60"
-            type="submit"
-            disabled={creatingClass}
-          >
-            {creatingClass ? 'Creating...' : 'Create Class'}
-          </button>
+              <InputField label="Title" value={title} onChange={setTitle} />
+              <label className="grid gap-1.5 text-sm text-slate-700">
+                <span className="font-medium">Message</span>
+                <textarea
+                  className="min-h-24 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  onChange={(event) => setMessage(event.target.value)}
+                  required
+                  value={message}
+                />
+              </label>
+              <button className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700" type="submit">
+                Send Notification
+              </button>
+              {sendInfo && <p className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700">{sendInfo}</p>}
+              {sendError && <p className="rounded-lg bg-rose-50 p-2 text-sm text-rose-700">{sendError}</p>}
+            </form>
+          </Card>
+        )}
+      </div>
 
-          {classInfo && <p className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700">{classInfo}</p>}
-          {classError && <p className="rounded-lg bg-rose-50 p-2 text-sm text-rose-700">{classError}</p>}
-        </form>
-      </Card>
-
-      <Card>
-        <form id="broadcast" className="grid gap-3" onSubmit={submit}>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Admin Broadcast</h3>
-            <p className="text-sm text-slate-500">Send a real-time announcement to active students.</p>
-          </div>
-
-          <InputField label="Title" value={title} onChange={setTitle} />
-          <label className="grid gap-1.5 text-sm text-slate-700">
-            <span className="font-medium">Message</span>
-            <textarea
-              className="min-h-24 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-              onChange={(event) => setMessage(event.target.value)}
-              required
-              value={message}
-            />
-          </label>
-          <button className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700" type="submit">
-            Send Notification
-          </button>
-          {sendInfo && <p className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700">{sendInfo}</p>}
-          {sendError && <p className="rounded-lg bg-rose-50 p-2 text-sm text-rose-700">{sendError}</p>}
-        </form>
-      </Card>
-
-      <div className="xl:col-span-2">
+      {showStudents && (
         <Card>
           <div id="students" className="space-y-3">
-          <h3 className="text-lg font-semibold text-slate-900">Pending Students</h3>
-          {pendingStudents.length === 0 && <p className="text-sm text-slate-500">No pending student accounts.</p>}
+            <h3 className="text-lg font-semibold text-slate-900">Pending Students</h3>
+            {pendingStudents.length === 0 && <p className="text-sm text-slate-500">No pending student accounts.</p>}
 
-          {pendingStudents.length > 0 && (
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.12em] text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Created</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
-                  {pendingStudents.map((student) => (
-                    <tr key={student.id}>
-                      <td className="px-4 py-3 font-medium text-slate-900">{student.fullName}</td>
-                      <td className="px-4 py-3">{student.email}</td>
-                      <td className="px-4 py-3">{formatDate(student.createdAt)}</td>
+            {pendingStudents.length > 0 && (
+              <div className="overflow-x-auto rounded-lg border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                  <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.12em] text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Created</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                    {pendingStudents.map((student) => (
+                      <tr key={student.id}>
+                        <td className="px-4 py-3 font-medium text-slate-900">{student.fullName}</td>
+                        <td className="px-4 py-3">{student.email}</td>
+                        <td className="px-4 py-3">{formatDate(student.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </Card>
-      </div>
+      )}
     </div>
   )
 }

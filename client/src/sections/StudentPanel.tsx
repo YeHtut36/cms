@@ -9,7 +9,9 @@ import { getMyNotifications } from '../services/notificationService'
 import type { ChatMessage, NotificationItem } from '../types/models'
 import { formatDate } from '../utils/format'
 
-export function StudentPanel({ token, userEmail }: { token: string; userEmail: string }) {
+type StudentPanelMode = 'all' | 'notifications' | 'chat'
+
+export function StudentPanel({ token, userEmail, mode = 'all' }: { token: string; userEmail: string; mode?: StudentPanelMode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [chatClassId, setChatClassId] = useState<string>('')
   const [chatInput, setChatInput] = useState<string>('')
@@ -18,11 +20,21 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
   const clientRef = useRef<Client | null>(null)
   const classSubRef = useRef<StompSubscription | null>(null)
 
-  useEffect(() => {
-    getMyNotifications(token).then(setNotifications).catch(() => undefined)
-  }, [token])
+  const showNotifications = mode === 'all' || mode === 'notifications'
+  const showChat = mode === 'all' || mode === 'chat'
 
   useEffect(() => {
+    if (!showNotifications) {
+      return
+    }
+    getMyNotifications(token).then(setNotifications).catch(() => undefined)
+  }, [token, showNotifications])
+
+  useEffect(() => {
+    if (!showChat) {
+      return
+    }
+
     if (!chatClassId) {
       setMessages([])
       return
@@ -31,9 +43,13 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
     getClassMessages(chatClassId, token)
       .then(setMessages)
       .catch(() => setMessages([]))
-  }, [chatClassId, token])
+  }, [chatClassId, token, showChat])
 
   useEffect(() => {
+    if (!showNotifications && !showChat) {
+      return
+    }
+
     const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const client = new Client({
       brokerURL: `${wsProtocol}://${window.location.host}/ws`,
@@ -42,12 +58,14 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
     })
 
     client.onConnect = () => {
-      client.subscribe('/user/queue/notifications', (frame: IMessage) => {
-        const notification = JSON.parse(frame.body) as NotificationItem
-        setNotifications((prev) => [notification, ...prev])
-      })
+      if (showNotifications) {
+        client.subscribe('/user/queue/notifications', (frame: IMessage) => {
+          const notification = JSON.parse(frame.body) as NotificationItem
+          setNotifications((prev) => [notification, ...prev])
+        })
+      }
 
-      if (chatClassId) {
+      if (showChat && chatClassId) {
         classSubRef.current = client.subscribe(`/topic/classes/${chatClassId}/chat`, (frame: IMessage) => {
           const chatMessage = JSON.parse(frame.body) as ChatMessage
           setMessages((prev) => [...prev, chatMessage])
@@ -64,7 +82,7 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
       client.deactivate()
       clientRef.current = null
     }
-  }, [token, chatClassId])
+  }, [token, chatClassId, showChat, showNotifications])
 
   const sendChat = (event: FormEvent) => {
     event.preventDefault()
@@ -79,55 +97,61 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
     setChatInput('')
   }
 
+  const grid = showNotifications && showChat ? 'grid gap-4 xl:grid-cols-2' : 'grid gap-4'
+
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
-      <Card>
-        <div id="notifications" className="space-y-3">
-          <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
-          <p className="text-xs text-slate-500">Realtime queue + history for {userEmail}</p>
+    <div className={grid}>
+      {showNotifications && (
+        <Card>
+          <div id="notifications" className="space-y-3">
+            <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
+            <p className="text-xs text-slate-500">Realtime queue + history for {userEmail}</p>
 
-          <div className="max-h-96 space-y-2 overflow-auto rounded-lg border border-slate-200 p-3">
-            {notifications.length === 0 && <p className="text-sm text-slate-500">No notifications yet.</p>}
-            {notifications.map((item) => (
-              <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-                <p className="font-medium text-slate-800">{item.title}</p>
-                <p className="text-slate-600">{item.message}</p>
-                <p className="mt-1 text-xs text-slate-500">{formatDate(item.createdAt)}</p>
-              </div>
-            ))}
+            <div className="max-h-96 space-y-2 overflow-auto rounded-lg border border-slate-200 p-3">
+              {notifications.length === 0 && <p className="text-sm text-slate-500">No notifications yet.</p>}
+              {notifications.map((item) => (
+                <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                  <p className="font-medium text-slate-800">{item.title}</p>
+                  <p className="text-slate-600">{item.message}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatDate(item.createdAt)}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
-      <Card>
-        <div id="chat" className="space-y-3">
-          <h3 className="text-lg font-semibold text-slate-900">Class Chat</h3>
-          <InputField label="Class ID" value={chatClassId} onChange={setChatClassId} placeholder="Paste class UUID" />
+      {showChat && (
+        <Card>
+          <div id="chat" className="space-y-3">
+            <h3 className="text-lg font-semibold text-slate-900">Class Chat</h3>
+            <InputField label="Class ID" value={chatClassId} onChange={setChatClassId} placeholder="Paste class UUID" />
 
-          <div className="max-h-64 space-y-2 overflow-auto rounded-lg border border-slate-200 p-3">
-            {messages.length === 0 && <p className="text-sm text-slate-500">Enter class ID to load messages.</p>}
-            {messages.map((item) => (
-              <div key={item.id} className="rounded bg-slate-50 p-2 text-sm">
-                <p className="font-medium text-slate-800">{item.senderName}</p>
-                <p className="text-slate-700">{item.message}</p>
-                <p className="text-xs text-slate-400">{formatDate(item.createdAt)}</p>
-              </div>
-            ))}
+            <div className="max-h-64 space-y-2 overflow-auto rounded-lg border border-slate-200 p-3">
+              {messages.length === 0 && <p className="text-sm text-slate-500">Enter class ID to load messages.</p>}
+              {messages.map((item) => (
+                <div key={item.id} className="rounded bg-slate-50 p-2 text-sm">
+                  <p className="font-medium text-slate-800">{item.senderName}</p>
+                  <p className="text-slate-700">{item.message}</p>
+                  <p className="text-xs text-slate-400">{formatDate(item.createdAt)}</p>
+                </div>
+              ))}
+            </div>
+
+            <form className="flex gap-2" onSubmit={sendChat}>
+              <input
+                className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                onChange={(event) => setChatInput(event.target.value)}
+                placeholder="Type message"
+                value={chatInput}
+              />
+              <button className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700" type="submit">
+                Send
+              </button>
+            </form>
           </div>
-
-          <form className="flex gap-2" onSubmit={sendChat}>
-            <input
-              className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-              onChange={(event) => setChatInput(event.target.value)}
-              placeholder="Type message"
-              value={chatInput}
-            />
-            <button className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700" type="submit">
-              Send
-            </button>
-          </form>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   )
 }

@@ -1,25 +1,24 @@
+import { NavLink } from 'react-router-dom'
 import type { Role } from '../../types/auth'
 
 type SidebarItem = {
-  href: string
+  to: string
   label: string
 }
 
-const baseItems: SidebarItem[] = [{ href: '#overview', label: 'Overview' }]
+const baseItems: SidebarItem[] = [{ to: '/app/overview', label: 'Overview' }]
 
 const roleItems: Record<Role, SidebarItem[]> = {
   ADMIN: [
-    { href: '#payments', label: 'Payment Review' },
-    { href: '#classes', label: 'Class Management' },
-    { href: '#broadcast', label: 'Broadcast' },
-    { href: '#students', label: 'Pending Students' },
+    { to: '/app/payments', label: 'Payment Review' },
+    { to: '/app/classes', label: 'Class Management' },
+    { to: '/app/broadcast', label: 'Broadcast' },
+    { to: '/app/students', label: 'Pending Students' },
   ],
-  HR: [
-    { href: '#payments', label: 'Payment Review' },
-  ],
+  HR: [{ to: '/app/payments', label: 'Payment Review' }],
   STUDENT: [
-    { href: '#notifications', label: 'Notifications' },
-    { href: '#chat', label: 'Class Chat' },
+    { to: '/app/notifications', label: 'Notifications' },
+    { to: '/app/chat', label: 'Class Chat' },
   ],
 }
 
@@ -35,13 +34,20 @@ export function AppSidebar({ role }: { role: Role }) {
 
       <nav className="space-y-1 px-3">
         {items.map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              `block rounded-lg px-3 py-2 text-sm font-medium transition ${
+                isActive
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`
+            }
+            end
           >
             {item.label}
-          </a>
+          </NavLink>
         ))}
       </nav>
     </aside>

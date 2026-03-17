@@ -21,7 +21,7 @@ export function TopNav() {
 
           {token && user ? (
             <>
-              <Link className="rounded-lg px-3 py-2 hover:bg-slate-100" to="/app">
+              <Link className="rounded-lg px-3 py-2 hover:bg-slate-100" to="/app/overview">
                 Dashboard
               </Link>
               <span className="hidden rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 md:inline-block">
