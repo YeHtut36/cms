@@ -29,37 +29,58 @@ export function PaymentReviewPanel({ token }: { token: string }) {
 
   return (
     <Card>
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Pending Payment Verification</h3>
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Pending Payment Verification</h3>
+          <p className="text-sm text-slate-500">Review KBZ transaction IDs and approve or reject submitted payments.</p>
+        </div>
+
         {error && <p className="rounded-lg bg-rose-50 p-2 text-sm text-rose-700">{error}</p>}
         {payments.length === 0 && <p className="text-sm text-slate-500">No pending payments.</p>}
 
-        <div className="space-y-2">
-          {payments.map((payment) => (
-            <div key={payment.id} className="rounded-xl border border-slate-200 p-3 text-sm">
-              <p className="font-medium text-slate-800">{payment.classTitle}</p>
-              <p className="text-slate-600">
-                Student: {payment.studentName} | Tx: {payment.kpayTransactionId} | Amount: {payment.amountMmk.toLocaleString()} MMK
-              </p>
-              <div className="mt-2 flex gap-2">
-                <button
-                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-500"
-                  onClick={() => review(payment.id, 'VERIFIED')}
-                  type="button"
-                >
-                  Verify
-                </button>
-                <button
-                  className="rounded-md bg-rose-600 px-3 py-1.5 text-white hover:bg-rose-500"
-                  onClick={() => review(payment.id, 'REJECTED')}
-                  type="button"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        {payments.length > 0 && (
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="min-w-full divide-y divide-slate-200 text-sm">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.12em] text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Class</th>
+                  <th className="px-4 py-3">Student</th>
+                  <th className="px-4 py-3">Transaction ID</th>
+                  <th className="px-4 py-3">Amount</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                {payments.map((payment) => (
+                  <tr key={payment.id}>
+                    <td className="px-4 py-3 font-medium text-slate-900">{payment.classTitle}</td>
+                    <td className="px-4 py-3">{payment.studentName}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{payment.kpayTransactionId}</td>
+                    <td className="px-4 py-3">{payment.amountMmk.toLocaleString()} MMK</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="rounded-md bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-500"
+                          onClick={() => review(payment.id, 'VERIFIED')}
+                          type="button"
+                        >
+                          Verify
+                        </button>
+                        <button
+                          className="rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-700 hover:bg-rose-100"
+                          onClick={() => review(payment.id, 'REJECTED')}
+                          type="button"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </Card>
   )

@@ -80,16 +80,16 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 xl:grid-cols-2">
       <Card>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Notifications</h3>
+        <div id="notifications" className="space-y-3">
+          <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
           <p className="text-xs text-slate-500">Realtime queue + history for {userEmail}</p>
 
-          <div className="max-h-96 space-y-2 overflow-auto">
+          <div className="max-h-96 space-y-2 overflow-auto rounded-lg border border-slate-200 p-3">
             {notifications.length === 0 && <p className="text-sm text-slate-500">No notifications yet.</p>}
             {notifications.map((item) => (
-              <div key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+              <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                 <p className="font-medium text-slate-800">{item.title}</p>
                 <p className="text-slate-600">{item.message}</p>
                 <p className="mt-1 text-xs text-slate-500">{formatDate(item.createdAt)}</p>
@@ -100,8 +100,8 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
       </Card>
 
       <Card>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Class Chat</h3>
+        <div id="chat" className="space-y-3">
+          <h3 className="text-lg font-semibold text-slate-900">Class Chat</h3>
           <InputField label="Class ID" value={chatClassId} onChange={setChatClassId} placeholder="Paste class UUID" />
 
           <div className="max-h-64 space-y-2 overflow-auto rounded-lg border border-slate-200 p-3">
@@ -117,7 +117,7 @@ export function StudentPanel({ token, userEmail }: { token: string; userEmail: s
 
           <form className="flex gap-2" onSubmit={sendChat}>
             <input
-              className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 focus:ring"
+              className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               onChange={(event) => setChatInput(event.target.value)}
               placeholder="Type message"
               value={chatInput}

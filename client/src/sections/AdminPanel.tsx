@@ -99,73 +99,78 @@ export function AdminPanel({ token }: { token: string }) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 xl:grid-cols-2">
       <Card>
         <form className="grid gap-3" onSubmit={submitClass}>
-          <h3 className="text-lg font-semibold">Create Class</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Create Class</h3>
+            <p className="text-sm text-slate-500">Publish new classes with pricing, schedule, and payment QR setup.</p>
+          </div>
+
           <InputField label="Title" value={classForm.title} onChange={(v) => setClassForm((p) => ({ ...p, title: v }))} />
-          <InputField
-            label="Category"
-            value={classForm.category}
-            onChange={(v) => setClassForm((p) => ({ ...p, category: v }))}
-            required={false}
-          />
-          <InputField
-            label="Instructor"
-            value={classForm.instructorName}
-            onChange={(v) => setClassForm((p) => ({ ...p, instructorName: v }))}
-            required={false}
-          />
-          <InputField
-            label="Price (MMK)"
-            type="number"
-            value={classForm.priceMmk}
-            onChange={(v) => setClassForm((p) => ({ ...p, priceMmk: v }))}
-          />
-          <InputField
-            label="Max Capacity"
-            type="number"
-            value={classForm.maxCapacity}
-            onChange={(v) => setClassForm((p) => ({ ...p, maxCapacity: v }))}
-          />
-          <InputField
-            label="Duration Weeks"
-            type="number"
-            required={false}
-            value={classForm.durationWeeks}
-            onChange={(v) => setClassForm((p) => ({ ...p, durationWeeks: v }))}
-          />
-          <InputField
-            label="Start Date"
-            type="datetime-local"
-            value={classForm.startDate}
-            onChange={(v) => setClassForm((p) => ({ ...p, startDate: v }))}
-          />
-          <InputField
-            label="End Date"
-            type="datetime-local"
-            required={false}
-            value={classForm.endDate}
-            onChange={(v) => setClassForm((p) => ({ ...p, endDate: v }))}
-          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <InputField
+              label="Category"
+              value={classForm.category}
+              onChange={(v) => setClassForm((p) => ({ ...p, category: v }))}
+              required={false}
+            />
+            <InputField
+              label="Instructor"
+              value={classForm.instructorName}
+              onChange={(v) => setClassForm((p) => ({ ...p, instructorName: v }))}
+              required={false}
+            />
+            <InputField
+              label="Price (MMK)"
+              type="number"
+              value={classForm.priceMmk}
+              onChange={(v) => setClassForm((p) => ({ ...p, priceMmk: v }))}
+            />
+            <InputField
+              label="Max Capacity"
+              type="number"
+              value={classForm.maxCapacity}
+              onChange={(v) => setClassForm((p) => ({ ...p, maxCapacity: v }))}
+            />
+            <InputField
+              label="Duration Weeks"
+              type="number"
+              required={false}
+              value={classForm.durationWeeks}
+              onChange={(v) => setClassForm((p) => ({ ...p, durationWeeks: v }))}
+            />
+            <label className="grid gap-1.5 text-sm text-slate-700">
+              <span className="font-medium">Status</span>
+              <select
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                value={classForm.status}
+                onChange={(event) => setClassForm((p) => ({ ...p, status: event.target.value as ClassStatus }))}
+              >
+                <option value="DRAFT">DRAFT</option>
+                <option value="UPCOMING">UPCOMING</option>
+                <option value="ONGOING">ONGOING</option>
+              </select>
+            </label>
+            <InputField
+              label="Start Date"
+              type="datetime-local"
+              value={classForm.startDate}
+              onChange={(v) => setClassForm((p) => ({ ...p, startDate: v }))}
+            />
+            <InputField
+              label="End Date"
+              type="datetime-local"
+              required={false}
+              value={classForm.endDate}
+              onChange={(v) => setClassForm((p) => ({ ...p, endDate: v }))}
+            />
+          </div>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Status
-            <select
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 focus:ring"
-              value={classForm.status}
-              onChange={(event) => setClassForm((p) => ({ ...p, status: event.target.value as ClassStatus }))}
-            >
-              <option value="DRAFT">DRAFT</option>
-              <option value="UPCOMING">UPCOMING</option>
-              <option value="ONGOING">ONGOING</option>
-            </select>
-          </label>
-
-          <label className="grid gap-1 text-sm text-slate-700">
-            Description
+          <label className="grid gap-1.5 text-sm text-slate-700">
+            <span className="font-medium">Description</span>
             <textarea
-              className="min-h-20 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 focus:ring"
+              className="min-h-24 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               value={classForm.description}
               onChange={(event) => setClassForm((p) => ({ ...p, description: event.target.value }))}
             />
@@ -198,19 +203,23 @@ export function AdminPanel({ token }: { token: string }) {
       </Card>
 
       <Card>
-        <form className="grid gap-3" onSubmit={submit}>
-          <h3 className="text-lg font-semibold">Admin Broadcast</h3>
+        <form id="broadcast" className="grid gap-3" onSubmit={submit}>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Admin Broadcast</h3>
+            <p className="text-sm text-slate-500">Send a real-time announcement to active students.</p>
+          </div>
+
           <InputField label="Title" value={title} onChange={setTitle} />
-          <label className="grid gap-1 text-sm text-slate-700">
-            Message
+          <label className="grid gap-1.5 text-sm text-slate-700">
+            <span className="font-medium">Message</span>
             <textarea
-              className="min-h-24 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none ring-indigo-300 focus:ring"
+              className="min-h-24 rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               onChange={(event) => setMessage(event.target.value)}
               required
               value={message}
             />
           </label>
-          <button className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500" type="submit">
+          <button className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700" type="submit">
             Send Notification
           </button>
           {sendInfo && <p className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700">{sendInfo}</p>}
@@ -218,19 +227,37 @@ export function AdminPanel({ token }: { token: string }) {
         </form>
       </Card>
 
-      <Card>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Pending Students</h3>
+      <div className="xl:col-span-2">
+        <Card>
+          <div id="students" className="space-y-3">
+          <h3 className="text-lg font-semibold text-slate-900">Pending Students</h3>
           {pendingStudents.length === 0 && <p className="text-sm text-slate-500">No pending student accounts.</p>}
-          {pendingStudents.map((student) => (
-            <div key={student.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-              <p className="font-medium text-slate-800">{student.fullName}</p>
-              <p className="text-slate-600">{student.email}</p>
-              <p className="text-slate-500">Created: {formatDate(student.createdAt)}</p>
+
+          {pendingStudents.length > 0 && (
+            <div className="overflow-x-auto rounded-lg border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.12em] text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3">Created</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+                  {pendingStudents.map((student) => (
+                    <tr key={student.id}>
+                      <td className="px-4 py-3 font-medium text-slate-900">{student.fullName}</td>
+                      <td className="px-4 py-3">{student.email}</td>
+                      <td className="px-4 py-3">{formatDate(student.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
-        </div>
-      </Card>
+          )}
+          </div>
+        </Card>
+      </div>
     </div>
   )
 }
