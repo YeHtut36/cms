@@ -7,7 +7,10 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const headers = new Headers(options.headers)
 
-  if (!headers.has('Content-Type') && options.body != null) {
+  const isFormData = options.body instanceof FormData
+  const shouldSetJson = options.body != null && !isFormData && !(options.body instanceof Blob)
+
+  if (!headers.has('Content-Type') && shouldSetJson) {
     headers.set('Content-Type', 'application/json')
   }
 

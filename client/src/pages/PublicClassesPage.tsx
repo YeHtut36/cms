@@ -32,9 +32,12 @@ export function PublicClassesPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {classes.map((item) => (
-          <article key={item.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-3 inline-block rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-              {item.status}
+          <article key={item.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase text-indigo-700">{item.status}</span>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                {item.priceMmk.toLocaleString()} MMK
+              </span>
             </div>
             <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
             <p className="mt-2 min-h-[72px] overflow-hidden text-sm text-slate-600">{item.description || 'No description provided.'}</p>
@@ -48,14 +51,19 @@ export function PublicClassesPage() {
                 <dd className="font-medium text-slate-800">{item.instructorName || '-'}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt>Price</dt>
-                <dd className="font-semibold text-emerald-700">{item.priceMmk.toLocaleString()} MMK</dd>
+                <dt>Start</dt>
+                <dd className="font-medium text-slate-800">{formatDate(item.startDate)}</dd>
               </div>
             </dl>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-xs text-slate-500">Start: {formatDate(item.startDate)}</span>
+            <div className="mt-4 flex flex-1 items-end justify-between gap-2">
               <Link
-                to="/onboarding"
+                to={`/classes/${item.id}`}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                View details
+              </Link>
+              <Link
+                to={`/onboarding?classId=${item.id}`}
                 className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
               >
                 Enroll now

@@ -13,6 +13,7 @@ import { ClassChatPage } from '../pages/ClassChatPage'
 import { LoginPage } from '../pages/LoginPage'
 import { OnboardingPage } from '../pages/OnboardingPage'
 import { PublicClassesPage } from '../pages/PublicClassesPage'
+import { ClassDetailPage } from '../pages/ClassDetailPage'
 
 function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -40,6 +41,14 @@ export default function AppRoot() {
           element={
             <PublicLayout>
               <OnboardingPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/classes/:id"
+          element={
+            <PublicLayout>
+              <ClassDetailPage />
             </PublicLayout>
           }
         />

@@ -16,9 +16,10 @@ export type ClassItem = {
   title: string
   description: string | null
   category: string | null
-  thumbnailUrl: string | null
   priceMmk: number
   kbzQrImageUrl: string | null
+  courseIncludes: string | null
+  kbzPayPhone: string | null
   startDate: string
   endDate: string | null
   durationWeeks: number | null
@@ -34,9 +35,10 @@ export type ClassCreatePayload = {
   title: string
   description: string | null
   category: string | null
-  thumbnailUrl: string | null
   priceMmk: number
   kbzQrImageUrl: string | null
+  courseIncludes: string | null
+  kbzPayPhone: string | null
   startDate: string
   endDate: string | null
   durationWeeks: number | null
@@ -79,4 +81,3 @@ export type ChatMessage = {
   message: string
   createdAt: string
 }
-

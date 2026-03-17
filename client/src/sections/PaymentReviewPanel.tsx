@@ -47,6 +47,7 @@ export function PaymentReviewPanel({ token }: { token: string }) {
                   <th className="px-4 py-3">Student</th>
                   <th className="px-4 py-3">Transaction ID</th>
                   <th className="px-4 py-3">Amount</th>
+                  <th className="px-4 py-3">Proof</th>
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
@@ -57,6 +58,20 @@ export function PaymentReviewPanel({ token }: { token: string }) {
                     <td className="px-4 py-3">{payment.studentName}</td>
                     <td className="px-4 py-3 font-mono text-xs">{payment.kpayTransactionId}</td>
                     <td className="px-4 py-3">{payment.amountMmk.toLocaleString()} MMK</td>
+                    <td className="px-4 py-3">
+                      {payment.paymentProofUrl ? (
+                        <a
+                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-500"
+                          href={payment.paymentProofUrl}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          View proof
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-500">None</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <button

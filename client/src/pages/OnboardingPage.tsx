@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { AlertMessage } from '../components/ui/AlertMessage'
 import { Card } from '../components/ui/Card'
 import { InputField } from '../components/ui/InputField'
 import { getPublicClasses } from '../services/classService'
-import { submitOnboarding } from '../services/onboardingService'
+import { FileUploadField } from '../components/ui/FileUploadField'
+import { submitOnboarding, uploadPaymentProof } from '../services/onboardingService'
 import type { ClassItem } from '../types/models'
 
 export function OnboardingPage() {
+  const [searchParams] = useSearchParams()
   const [classes, setClasses] = useState<ClassItem[]>([])
   const [form, setForm] = useState({
     fullName: '',
@@ -17,15 +20,24 @@ export function OnboardingPage() {
     classId: '',
     amountMmk: '',
     kpayTransactionId: '',
-    paymentProofUrl: '',
   })
   const [error, setError] = useState<string>('')
   const [info, setInfo] = useState<string>('')
   const [submitting, setSubmitting] = useState<boolean>(false)
+  const [proofFile, setProofFile] = useState<File | null>(null)
+  const [proofPreview, setProofPreview] = useState<string>('')
+  const [proofError, setProofError] = useState<string>('')
 
   useEffect(() => {
     getPublicClasses().then(setClasses).catch(() => undefined)
   }, [])
+
+  useEffect(() => {
+    const selectedClassId = searchParams.get('classId')
+    if (selectedClassId) {
+      setForm((prev) => ({ ...prev, classId: selectedClassId }))
+    }
+  }, [searchParams])
 
   const classOptions = useMemo(
     () =>
@@ -44,13 +56,57 @@ export function OnboardingPage() {
     }
   }, [classOptions, form.classId])
 
+  useEffect(() => {
+    if (!proofPreview) {
+      return undefined
+    }
+
+    return () => URL.revokeObjectURL(proofPreview)
+  }, [proofPreview])
+
+  const handleProofChange = (file: File | null) => {
+    if (!file) {
+      setProofFile(null)
+      setProofPreview('')
+      setProofError('')
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setProofError('Please upload an image file (PNG/JPG).')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setProofError('Max file size is 5MB.')
+      return
+    }
+
+    setProofError('')
+    setProofFile(file)
+    setProofPreview(URL.createObjectURL(file))
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setSubmitting(true)
     setError('')
     setInfo('')
 
+    if (proofError) {
+      setSubmitting(false)
+      setError('Please fix the payment proof file selection before submitting.')
+      return
+    }
+
     try {
+      let proofUrl: string | null = null
+
+      if (proofFile) {
+        const uploadResult = await uploadPaymentProof(proofFile)
+        proofUrl = uploadResult.url
+      }
+
       await submitOnboarding({
         fullName: form.fullName,
         phone: form.phone,
@@ -59,7 +115,7 @@ export function OnboardingPage() {
         classId: form.classId,
         amountMmk: Number(form.amountMmk),
         kpayTransactionId: form.kpayTransactionId,
-        paymentProofUrl: form.paymentProofUrl || null,
+        paymentProofUrl: proofUrl,
       })
 
       setInfo('Submitted successfully. HR/Admin will verify and then you can login with email/password.')
@@ -71,8 +127,9 @@ export function OnboardingPage() {
         classId: '',
         amountMmk: '',
         kpayTransactionId: '',
-        paymentProofUrl: '',
       })
+      setProofFile(null)
+      setProofPreview('')
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -132,12 +189,32 @@ export function OnboardingPage() {
             value={form.kpayTransactionId}
             onChange={(v) => setForm((p) => ({ ...p, kpayTransactionId: v }))}
           />
-          <InputField
-            label="Payment proof URL (optional)"
-            required={false}
-            value={form.paymentProofUrl}
-            onChange={(v) => setForm((p) => ({ ...p, paymentProofUrl: v }))}
+          <FileUploadField
+            label="Upload payment proof (optional)"
+            file={proofFile}
+            onFileChange={handleProofChange}
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            helperText="Upload the KBZ Pay e-receipt screenshot."
+            error={proofError}
           />
+
+          {proofPreview && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-800">Preview</p>
+                <button
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-500"
+                  onClick={() => handleProofChange(null)}
+                  type="button"
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="mt-2 overflow-hidden rounded-md border border-slate-200 bg-white">
+                <img alt="Payment proof preview" className="max-h-80 w-full object-contain" src={proofPreview} />
+              </div>
+            </div>
+          )}
 
           <button
             className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 disabled:opacity-60"

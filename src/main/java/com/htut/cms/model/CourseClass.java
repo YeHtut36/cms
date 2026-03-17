@@ -43,6 +43,9 @@ public class CourseClass {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "course_includes", columnDefinition = "TEXT")
+    private String courseIncludes;
+
     @Column(length = 100)
     private String category;
 
@@ -54,6 +57,9 @@ public class CourseClass {
 
     @Column(name = "kbz_qr_image_url", length = 255)
     private String kbzQrImageUrl;
+
+    @Column(name = "kbz_pay_phone", length = 30)
+    private String kbzPayPhone;
 
     @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;

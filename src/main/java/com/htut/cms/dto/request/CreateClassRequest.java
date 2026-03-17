@@ -13,10 +13,12 @@ import java.time.LocalDateTime;
 public record CreateClassRequest(
         @NotBlank @Size(max = 255) String title,
         String description,
+        String courseIncludes,
         @Size(max = 100) String category,
         @Size(max = 255) String thumbnailUrl,
         @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal priceMmk,
         @Size(max = 255) String kbzQrImageUrl,
+        @Size(max = 30) String kbzPayPhone,
         @NotNull @Future LocalDateTime startDate,
         LocalDateTime endDate,
         Integer durationWeeks,

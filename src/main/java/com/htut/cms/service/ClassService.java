@@ -31,10 +31,12 @@ public class ClassService {
         CourseClass courseClass = CourseClass.builder()
                 .title(request.title().trim())
                 .description(trimToNull(request.description()))
+                .courseIncludes(trimToNull(request.courseIncludes()))
                 .category(trimToNull(request.category()))
                 .thumbnailUrl(trimToNull(request.thumbnailUrl()))
                 .priceMmk(request.priceMmk())
                 .kbzQrImageUrl(trimToNull(request.kbzQrImageUrl()))
+                .kbzPayPhone(trimToNull(request.kbzPayPhone()))
                 .startDate(request.startDate())
                 .endDate(request.endDate())
                 .durationWeeks(request.durationWeeks())
@@ -80,10 +82,12 @@ public class ClassService {
                 courseClass.getId(),
                 courseClass.getTitle(),
                 courseClass.getDescription(),
+                courseClass.getCourseIncludes(),
                 courseClass.getCategory(),
                 courseClass.getThumbnailUrl(),
                 courseClass.getPriceMmk(),
                 courseClass.getKbzQrImageUrl(),
+                courseClass.getKbzPayPhone(),
                 courseClass.getStartDate(),
                 courseClass.getEndDate(),
                 courseClass.getDurationWeeks(),
@@ -103,6 +107,41 @@ public class ClassService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    @Transactional
+    public ClassResponse updateClass(UUID classId, CreateClassRequest request, String editorEmail) {
+        validateCreateClassRequest(request);
+
+        CourseClass courseClass = classRepository.findByIdForUpdate(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found."));
+
+        // Optional: enforce creator editing only; current requirement allows admin edit any.
+
+        courseClass.setTitle(request.title().trim());
+        courseClass.setDescription(trimToNull(request.description()));
+        courseClass.setCourseIncludes(trimToNull(request.courseIncludes()));
+        courseClass.setCategory(trimToNull(request.category()));
+        courseClass.setThumbnailUrl(trimToNull(request.thumbnailUrl()));
+        courseClass.setPriceMmk(request.priceMmk());
+        courseClass.setKbzQrImageUrl(trimToNull(request.kbzQrImageUrl()));
+        courseClass.setKbzPayPhone(trimToNull(request.kbzPayPhone()));
+        courseClass.setStartDate(request.startDate());
+        courseClass.setEndDate(request.endDate());
+        courseClass.setDurationWeeks(request.durationWeeks());
+        courseClass.setMaxCapacity(request.maxCapacity() == null ? 30 : request.maxCapacity());
+        courseClass.setStatus(request.status() == null ? ClassStatus.UPCOMING : request.status());
+        courseClass.setInstructorName(trimToNull(request.instructorName()));
+
+        return toResponse(courseClass);
+    }
+
+    @Transactional
+    public void deleteClass(UUID classId) {
+        if (!classRepository.existsById(classId)) {
+            throw new IllegalArgumentException("Class not found.");
+        }
+        classRepository.deleteById(classId);
     }
 }
 

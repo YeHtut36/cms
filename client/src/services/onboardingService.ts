@@ -18,3 +18,13 @@ export function submitOnboarding(payload: OnboardingPayload) {
   })
 }
 
+export function uploadPaymentProof(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  return apiRequest<{ url: string }>('/api/v1/uploads/payment-proof', {
+    method: 'POST',
+    body: formData,
+  })
+}
+
